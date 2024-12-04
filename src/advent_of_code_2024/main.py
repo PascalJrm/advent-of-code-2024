@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from pprint import pprint
 from typing import Tuple, List
 from collections import Counter
 
@@ -84,6 +85,132 @@ def get_enabled_code(code: str):
     good_code =  [items[0]] + list(["".join(item.split("do()")[1:]) for item in items[1:]])
     return "".join(good_code)
 
+##Day 4
+
+def wordsearch(input_str: str):
+
+    def in_range(row, col, rows, cols):
+        return 0 <= row < rows and 0 <= col < cols
+
+    def get_diagonal_pairs(rows, cols):
+        diagonals_square_length = rows + cols - 1
+        pairs_1 = [
+            [(x-y,y) for y in range(x + 1) if in_range(x-y, y, rows, cols)]
+            for x in range(diagonals_square_length)
+        ]
+        # print(pairs_1)
+
+        pairs_2 = [
+            [(x-y,cols-y-1) for y in range(x + 1) if in_range(x-y, cols-y-1, rows, cols)]
+            for x in range(diagonals_square_length)
+        ]
+
+        return pairs_1 + pairs_2
+
+    def resolve_pairs(pair_sets: list[Tuple[int,int]], horizontals: list[str]):
+        return [
+            "".join([horizontals[pair[0]][pair[1]] for pair in pair_set])
+            for pair_set in pair_sets
+        ]
+
+    #horizontals
+    horizontals = input_str.splitlines()
+    rows = len(horizontals)
+    verticals = ["".join(x) for x in list(zip(*horizontals))]
+    cols = len(verticals)
+    pair_sets = get_diagonal_pairs(rows,cols)
+    diagonals = resolve_pairs(pair_sets, horizontals)
+    search_lists = horizontals + verticals + diagonals
+    matches = [item.count("XMAS") + item.count("SAMX") for item in search_lists]
+    return sum(matches)
+
+def wordsearch_complex(input_str: str):
+    def in_range(row, col, rows, cols):
+        return 0 <= row < rows and 0 <= col < cols
+
+    def resolve_pairs(pair_sets: list[Tuple[int,int]], horizontals: list[str]):
+        return [
+            "".join([horizontals[pair[0]][pair[1]] for pair in pair_set])
+            for pair_set in pair_sets
+        ]
+
+    horizontals = input_str.splitlines()
+    rows = len(horizontals)
+    verticals = ["".join(x) for x in list(zip(*horizontals))]
+    cols = len(verticals)
+
+    diagonals_square_length = rows + cols - 1
+
+    pairs_a = [
+        [(x - y, y) for y in range(x + 1) if in_range(x - y, y, rows, cols)]
+        for x in range(diagonals_square_length)
+    ]
+
+    pairs_b = [
+        [(x - y, cols - y - 1) for y in range(x + 1) if in_range(x - y, cols - y - 1, rows, cols)][::-1]
+        for x in range(diagonals_square_length)
+    ]
+
+
+    diagonals_a = resolve_pairs(pairs_a, horizontals)
+    diagonals_b = resolve_pairs(pairs_b, horizontals)
+
+    a_coords = [[pairs_a[key][m.start()+1] for m in re.finditer("MAS", value)]
+                     + [pairs_a[key][m.start()+1] for m in re.finditer("SAM", value)]
+                for key, value in enumerate(diagonals_a)]
+    a_coords_set = {c for l in a_coords for c in l}
+
+    b_coords = [[pairs_b[key][m.start() + 1] for m in re.finditer("MAS", value)]
+                     + [pairs_b[key][m.start() + 1] for m in re.finditer("SAM", value)]
+                for key, value in enumerate(diagonals_b)]
+    b_coords_set = {c for l in b_coords for c in l}
+
+    return len(b_coords_set.intersection(a_coords_set))
+
+    # def count_string_matches(find_string: str):
+    #     a_coords = {key: [pairs_a[key][m.start()+1] for m in re.finditer(find_string, value)]
+    #                      + [pairs_a[key][m.start()+1] for m in re.finditer(find_string[::-1], value)]
+    #
+    #                 for key, value in diagonals_a.items()}
+    #     print(a_coords)
+    #
+    #     b_coords = {key: [pairs_b[key][m.start() + 1] for m in re.finditer(find_string, value)]
+    #                      + [pairs_b[key][m.start() + 1] for m in re.finditer(find_string[::-1], value)]
+    #                 for key, value in diagonals_b.items()}
+    #
+    #     print(b_coords)
+    #
+    #     a_coords_set = {c for l in a_coords.values() for c in l}
+    #     pprint(a_coords_set)
+    #     b_coords_set = {c for l in b_coords.values() for c in l}
+    #     pprint(b_coords_set)
+    #
+    #     return len(a_coords_set.intersection(b_coords_set))
+    #
+    # print(count_string_matches("MAS"))
+    # matching_coords = set(a_coords.values()).intersection(set(b_coords.values()))
+
+    # pprint(matching_coords)
+    # pprint(b_coords)
+
+    # pprint(diagonals_b)
+    # print([
+    #     [
+    #         (match.start(), match.end())
+    #         for match in re.finditer("MAS", diagonal)
+    #     ]
+    #     for diagonal in diagonals_a])
+    #
+
+    #
+    # print(pairs_a)
+    # print(pairs_b)
+    #
+
+
+
+
+
 
 if __name__ == "__main__":
 
@@ -132,4 +259,12 @@ if __name__ == "__main__":
     print(f"only working code: {get_mul_matches(get_enabled_code(day_3))}")
 
 
+    ##Day 4
+    day_4_example = read_file(Path("data/2024_day_4_example.txt"))
+    day_4 = read_file(Path("data/2024_day_4.txt"))
 
+    print(f"example wordsearch: {wordsearch(day_4_example)}")
+    print(f"wordsearch: {wordsearch(day_4)}")
+
+    print(f"complex wordsearch example: {wordsearch_complex(day_4_example)}")
+    print(f"complex wordsearch: {wordsearch_complex(day_4)}")
